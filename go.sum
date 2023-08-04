@@ -109,8 +109,8 @@ github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504 h1:+31CdF/okdokeFN
 github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504/go.mod h1:gLRWYfYnMA9TONeppRSikMdXlHQ97xVsPojddUv3b/E=
 github.com/fyne-io/image v0.0.0-20220602074514-4956b0afb3d2 h1:hnLq+55b7Zh7/2IRzWCpiTcAvjv/P8ERF+N7+xXbZhk=
 github.com/fyne-io/image v0.0.0-20220602074514-4956b0afb3d2/go.mod h1:eO7W361vmlPOrykIg+Rsh1SZ3tQBaOsfzZhsIOb/Lm0=
-github.com/gcottom/mp3-mp4-tag v1.0.5 h1:6N6QsrRFCoUy7TzEo/fiovy4dH8viqQk8SisGPcOS5U=
-github.com/gcottom/mp3-mp4-tag v1.0.5/go.mod h1:K+EiwixQ4sU8a8do5KE3dK7Owdjq5FpUP9zf7fEE5nQ=
+github.com/gcottom/mp3-mp4-tag v1.1.0 h1:s2D+Ra0kgHi3NCGWjZjg0FAQN+TL0UKu8vLOgeiEo4U=
+github.com/gcottom/mp3-mp4-tag v1.1.0/go.mod h1:K+EiwixQ4sU8a8do5KE3dK7Owdjq5FpUP9zf7fEE5nQ=
 github.com/gcottom/musicbrainz v0.1.0 h1:c1uspYIvVT5JQMp5NyJOCaq6i+yd4h3Re2H8/uO+meQ=
 github.com/gcottom/musicbrainz v0.1.0/go.mod h1:taR9TxkS6jm5jxisDftap6D0eL6m6/UAhDh4LkJ3qUA=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=

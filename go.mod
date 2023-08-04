@@ -6,7 +6,7 @@ replace github.com/shkh/lastfm-go => ./lastfm-go
 
 require (
 	fyne.io/fyne/v2 v2.3.5
-	github.com/gcottom/mp3-mp4-tag v1.0.5
+	github.com/gcottom/mp3-mp4-tag v1.1.0
 	github.com/gcottom/musicbrainz v0.1.0
 	github.com/kkdai/youtube/v2 v2.8.1
 	github.com/shkh/lastfm-go v0.0.0-20191215035245-89a801c244e0

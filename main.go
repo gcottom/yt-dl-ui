@@ -8,10 +8,14 @@ import (
 	"runtime"
 	"strings"
 
+	
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -37,6 +41,83 @@ type PendingPreferences struct {
 	dldir string
 }
 
+func formatSearchResults(artist string, song string, album string) string {
+	lineLimit := 50
+	if len(artist)/lineLimit > 0 {
+		split := strings.Split(artist, " ")
+		temp := ""
+		artist = ""
+		for i, word := range split {
+			if (len(temp) + len(word)) < lineLimit {
+				temp = temp + " " + word
+				if i+1 == len(split) {
+					artist = artist + "\n" + temp
+				}
+			} else {
+				if artist == "" {
+					artist = temp
+					temp = word
+				} else {
+					artist = artist + "\n" + temp
+					temp = word
+					if i+1 == len(split) {
+						artist = artist + "\n" + temp
+					}
+				}
+			}
+		}
+	}
+	if len(song)/lineLimit > 0 {
+		split := strings.Split(song, " ")
+		temp := ""
+		song = ""
+		for i, word := range split {
+			if (len(temp) + len(word)) < lineLimit {
+				temp = temp + " " + word
+				if i+1 == len(split) {
+					song = song + "\n" + temp
+				}
+			} else {
+				if song == "" {
+					song = temp
+					temp = word
+				} else {
+					song = song + "\n" + temp
+					temp = word
+					if i+1 == len(split) {
+						song = song + "\n" + temp
+					}
+				}
+			}
+		}
+	}
+	if len(album)/lineLimit > 0 {
+		split := strings.Split(artist, " ")
+		temp := ""
+		album = ""
+		for i, word := range split {
+			if (len(temp) + len(word)) < lineLimit {
+				temp = temp + " " + word
+				if i+1 == len(split) {
+					album = album + "\n" + temp
+				}
+			} else {
+				if album == "" {
+					album = temp
+					temp = word
+				} else {
+					album = album + "\n" + temp
+					temp = word
+					if i+1 == len(split) {
+						album = album + "\n" + temp
+					}
+				}
+			}
+		}
+	}
+	return "Artist: " + artist + "\n\nTrack: " + song + "\n\nAlbum: " + album
+}
+
 func init() {
 	searchMetaWithArtist = func(s string) {
 		err := getMetaFromSongAndArtist(title, s)
@@ -51,7 +132,7 @@ func init() {
 				if err != nil {
 					fmt.Println("error getting image")
 				}
-				button := widget.NewButtonWithIcon("Artist: "+meta.artist+"\nTrack: "+meta.song+"\nAlbum: "+meta.album, img, func() {
+				button := NewCustomButton(formatSearchResults(meta.artist, meta.song, meta.album), img, func() {
 					saveMeta(meta, OutFile)
 					showMainScreen()
 				})
@@ -72,7 +153,7 @@ func init() {
 					if err != nil {
 						fmt.Println("error getting image")
 					}
-					button := widget.NewButtonWithIcon("Artist: "+meta.artist+"\nTrack: "+meta.song+"\nAlbum: "+meta.album, img, func() {
+					button := NewCustomButton(formatSearchResults(meta.artist, meta.song, meta.album), img, func() {
 						saveMeta(meta, OutFile)
 						showMainScreen()
 					})
@@ -90,7 +171,7 @@ func init() {
 			for _, result := range resultMeta {
 				if strings.Contains(strings.ToLower(result.artist), strings.ToLower(s)) {
 					meta := result
-					button := widget.NewButtonWithIcon("Artist: "+meta.artist+"\nTrack: "+meta.song+"\nAlbum: "+meta.album, theme.ErrorIcon(), func() {
+					button := NewCustomButton(formatSearchResults(meta.artist, meta.song, meta.album), theme.ErrorIcon(), func() {
 						saveMeta(meta, OutFile)
 						showMainScreen()
 					})
@@ -127,7 +208,7 @@ func init() {
 			if err != nil {
 				fmt.Println("Error getting image")
 			}
-			button := widget.NewButtonWithIcon("Artist: "+meta.artist+"\nTrack: "+meta.song+"\nAlbum: "+meta.album, img, func() {
+			button := NewCustomButton(formatSearchResults(meta.artist, meta.song, meta.album), img, func() {
 				saveMeta(meta, OutFile)
 				showMainScreen()
 			})
