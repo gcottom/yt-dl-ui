@@ -1,14 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"runtime"
 	"strings"
-
-	
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -31,10 +30,15 @@ var (
 	searchMeta           func()
 	settings             func()
 	saveSettings         func()
+	trackSavedNotif      func()
 	title                string
 	OutFile              string
 	DLDir                string
 	pendingPrefs         *PendingPreferences
+)
+
+const (
+	lineLimit = 50
 )
 
 type PendingPreferences struct {
@@ -42,7 +46,6 @@ type PendingPreferences struct {
 }
 
 func formatSearchResults(artist string, song string, album string) string {
-	lineLimit := 50
 	if len(artist)/lineLimit > 0 {
 		split := strings.Split(artist, " ")
 		temp := ""
@@ -286,6 +289,9 @@ func init() {
 		dialog.ShowInformation("Settings Saved", "Changes Have Been Saved Successfully!", w)
 		showMainScreen()
 	}
+	trackSavedNotif = func() {
+		dialog.ShowInformation("Complete", "Track Downloaded and MetaData Saved Successfully!", w)
+	}
 }
 func main() {
 	appIcon, err := fyne.LoadResourceFromPath("appIcon.png")
@@ -340,16 +346,22 @@ func showMainScreen() {
 			tempFile, title, err = download(urlBox.Text)
 			if err != nil {
 				fmt.Print("Download Error")
-			}
-			OutFile, err = convertToMp3(tempFile, title)
-			os.Chmod(tempFile, 0666)
-			os.Remove(tempFile)
-			if err != nil {
-				fmt.Print("Conversion Error")
+				handleError(err)
+				showMainScreen()
 			} else {
-				searchMeta()
+				OutFile, err = convertToMp3(tempFile, title)
+				os.Chmod(tempFile, 0666)
+				os.Remove(tempFile)
+				if err != nil {
+					fmt.Print("Conversion Error")
+					handleError(err)
+					showMainScreen()
+				} else {
+					searchMeta()
 
+				}
 			}
+
 		}
 	})
 	topbox := container.New(layout.NewHBoxLayout(), widget.NewLabel("Download A Track"), layout.NewSpacer(), widget.NewButtonWithIcon("Settings", theme.SettingsIcon(), func() {
@@ -365,42 +377,82 @@ func saveMeta(meta Meta, filepath string) {
 	url := meta.albumImage
 	// don't worry about errors
 	if url != "" {
-		response, e := http.Get(url)
-		if e != nil {
-			fmt.Println(e)
-		}
-		defer response.Body.Close()
-		file, err := os.Create(coverFileName)
+		response, err := http.Get(url)
 		if err != nil {
+			response.Body.Close()
 			fmt.Println(err)
+			handleError(err)
+		} else {
+			file, err := os.Create(coverFileName)
+			if err != nil {
+				file.Close()
+				fmt.Println(err)
+				handleError(err)
+			} else {
+				defer response.Body.Close()
+				defer file.Close()
+				_, err = io.Copy(file, response.Body)
+				if err != nil {
+					fmt.Println(err)
+					handleError(err)
+				} else {
+					meta.getAlbumMeta()
+					//open a file for writing
+
+					idTag, err := tag.OpenTag(filepath)
+					if err != nil {
+						fmt.Println(err)
+						handleError(err)
+					} else {
+						idTag.SetTitle(meta.song)
+						if url != "" {
+							idTag.SetAlbumArtFromFilePath(coverFileName)
+						}
+						idTag.SetAlbum(meta.album)
+						idTag.SetArtist(meta.artist)
+						idTag.SetGenre(meta.genre)
+						idTag.SetYear(meta.year)
+						idTag.SetBPM(meta.bpm)
+						idTag.Save()
+						os.Remove(coverFileName)
+
+						os.Rename(OutFile, outDir+SanitizeFilename(singleArtist)+" - "+SanitizeFilename(meta.song)+".mp3")
+						trackSavedNotif()
+					}
+
+				}
+			}
+
 		}
-		defer file.Close()
 
-		// Use io.Copy to just dump the response body to the file. This supports huge files
-		_, err = io.Copy(file, response.Body)
-		if err != nil {
-			fmt.Println(err)
+	}
+
+}
+func handleError(err error) {
+	s := fmt.Sprintf("FUCK\n%v", err)
+	if len(s)/lineLimit > 0 {
+		split := strings.Split(s, " ")
+		temp := ""
+		s = ""
+		for i, word := range split {
+			if (len(temp) + len(word)) < lineLimit {
+				temp = temp + " " + word
+				if i+1 == len(split) {
+					s = s + "\n" + temp
+				}
+			} else {
+				if s == "" {
+					s = temp
+					temp = word
+				} else {
+					s = s + "\n" + temp
+					temp = word
+					if i+1 == len(split) {
+						s = s + "\n" + temp
+					}
+				}
+			}
 		}
-
 	}
-	meta.getAlbumMeta()
-	//open a file for writing
-
-	idTag, err := tag.OpenTag(filepath)
-	if err != nil {
-		fmt.Println(err)
-	}
-	idTag.SetTitle(meta.song)
-	if url != "" {
-		idTag.SetAlbumArtFromFilePath(coverFileName)
-	}
-	idTag.SetAlbum(meta.album)
-	idTag.SetArtist(meta.artist)
-	idTag.SetGenre(meta.genre)
-	idTag.SetYear(meta.year)
-	idTag.SetBPM(meta.bpm)
-	idTag.Save()
-	os.Remove(coverFileName)
-
-	os.Rename(OutFile, outDir+SanitizeFilename(singleArtist)+" - "+SanitizeFilename(meta.song)+".mp3")
+	dialog.ShowError(errors.New(s), w)
 }

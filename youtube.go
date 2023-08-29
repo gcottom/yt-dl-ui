@@ -1,9 +1,9 @@
 package main
 
 import (
-	//"context"
+	"errors"
+	"fmt"
 	"io"
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -19,6 +19,7 @@ func download(id string) (string, string, error) {
 	id = strings.Replace(id, "https://www.music.youtube.com/watch?v=", "", 1)
 	id = strings.Replace(id, "https://www.youtube.com/watch?v", "", 1)
 	id = strings.Replace(id, "https://youtube.com/watch?v", "", 1)
+	id = strings.Split(id, "&")[0]
 	videoID := id // Replace with the YouTube video ID you want to download
 
 	// Create a new YouTube client
@@ -27,35 +28,39 @@ func download(id string) (string, string, error) {
 	// Get the video info
 	videoInfo, err := client.GetVideo(videoID)
 	if err != nil {
-		log.Fatalf("Failed to get video info: %v", err)
+		fmt.Printf("Failed to get video info: %v\n", err)
+		err = errors.New(fmt.Sprintf("Failed to get video info: %v\n", err))
+		return "", "", err
 	}
-
 	// Find the best audio format available
 	bestFormat := getBestAudioFormat(videoInfo.Formats.Type("audio"))
 	if bestFormat == nil {
-		log.Fatal("No audio formats found for the video")
+		err = errors.New(fmt.Sprintf("No audio formats found for the video"))
+		return "", "", err
 	}
 	stream, _, err := client.GetStream(videoInfo, bestFormat)
 	if err != nil {
-		panic(err)
+		err = errors.New(fmt.Sprintf("No Stream found"))
+		return "", "", err
 	}
 	title := SanitizeFilename(videoInfo.Title)
 	tempFile = os.TempDir() + "/yt-dl-ui/" + title + ".tmp"
 	os.Remove(tempFile)
-
 	if err != nil {
-		panic(err)
+		fmt.Printf("Unable to remove temp file: %v\n", err)
 	}
 	// Download the video in the best audio format
 	file, err := os.Create(tempFile)
 	if err != nil {
-		panic(err)
+		err = errors.New(fmt.Sprintf("Unable to create temp file: %v\n", err))
+		return "", "", err
 	}
-	defer file.Close()
 
+	defer file.Close()
 	_, err = io.Copy(file, stream)
 	if err != nil {
-		panic(err)
+		err = errors.New(fmt.Sprintf("Unable to copy stream data to file object: %v\n", err))
+		return "", "", err
 	}
 	return tempFile, title, nil
 }
@@ -71,7 +76,7 @@ func getBestAudioFormat(formats youtube.FormatList) *youtube.Format {
 			maxBitrate = format.Bitrate
 		}
 	}
-
+	fmt.Println(bestFormat.QualityLabel)
 	return bestFormat
 }
 func SanitizeFilename(fileName string) string {
